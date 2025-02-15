@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sorteo San Valentín 2024 – Florería Anedy</title>
+
+  <!-- 1) numbers.js: contiene la lista de teléfonos -->
+  <script src="numbers.js"></script>
+
+  <!-- 2) Librería WinWheel (local) -->
+  <script src="Winwheel.js"></script>
+
+  <!-- 3) GSAP (TweenMax) desde CDN para las animaciones -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
+
+  <!-- 4) Estilos básicos -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+      color: #632037; /* Vino oscuro */
+      background-color: #fff;
+    }
+    .logo {
+      margin: 10px;
+    }
+    .info-sorteo {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: left;
+      border: 1px solid #632037;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .info-sorteo p,
+    .info-sorteo ul {
+      line-height: 1.4;
+      margin: 6px 0;
+    }
+    .info-sorteo a {
+      color: #632037;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .info-sorteo a:hover {
+      text-decoration: underline;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 1rem;
+      background-color: #e0b06a; /* Dorado suave */
+      color: #632037;           /* Vino oscuro */
+      border: none;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #ecb1b9; /* Rosado pastel */
+      color: #fff;
+    }
+    #canvas {
+      display: block;
+      margin: 20px auto;
+      border: 2px solid #632037;
+      background-color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <!-- LOGO DE LA FLORERÍA -->
+  <img src="logo.png" alt="Logo Florería" width="200" class="logo">
+
+  <!-- TÍTULO PRINCIPAL -->
+  <h1>🎉 Sorteo San Valentín 2024 – Florería Anedy 💐🎁</h1>
+
+  <!-- SECCIÓN DE INFORMACIÓN -->
+  <div class="info-sorteo">
+    <p><strong>📅 Hoy, 15 de febrero, conoceremos al ganador del ramo de $1,000 MXN.</strong></p>
+    <p>🏆 El ganador será elegido al azar con esta ruleta de sorteos.</p>
+    <p><strong>📌 Si resultas ganador:</strong></p>
+    <ul>
+      <li>📲 Contáctanos por WhatsApp para reclamar tu premio:
+          <a href="https://wa.me/524442136232" target="_blank">https://wa.me/524442136232</a></li>
+      <li>📅 Tienes hasta el 20 de febrero para contactarnos.</li>
+      <li>💐 Podrás canjear tu ramo antes del 15 de abril de 2024.</li>
+    </ul>
+
+    <p>💐 ¡Gracias por participar y mucha suerte! 🍀✨</p>
+  </div>
+
+  <!-- BOTONES DE CONTROL -->
+  <p style="margin-top:30px;">
+    <button id="spinButton">Girar Ruleta</button>
+    <button id="resetButton">Reset</button>
+  </p>
+
+  <!-- LIENZO DE LA RULETA -->
+  <canvas id="canvas" width="500" height="500"></canvas>
+
+  <!-- SCRIPT PRINCIPAL -->
+  <script>
+    // 1) Obtenemos la lista de teléfonos del archivo numbers.js
+    let phonesRaw = window.PREDEFINED_NUMBERS;
+
+    // 2) Convertimos cada teléfono a un objeto de segmento
+    //    ocultando los 3 primeros dígitos con "XXX"
+    let colorPalette = ['#632037', '#e0b06a', '#ecb1b9', '#708372'];
+    let segmentsData = phonesRaw.map((phone, idx) => {
+      let hiddenPhone = phone.replace(/^(\d{3})/, 'XXX');
+      return {
+        fillStyle: colorPalette[idx % colorPalette.length],
+        text: hiddenPhone,
+        textFillStyle: '#ffffff'
+      };
+    });
+
+    // 3) Creamos un objeto Audio para el sonido "tick" (opcional, si tienes tick.mp3)
+    let tickAudio = new Audio('tick.mp3');
+    function playSound() {
+      tickAudio.pause();
+      tickAudio.currentTime = 0;
+      tickAudio.play();
+    }
+
+    // 4) Instanciamos la ruleta WinWheel
+    let theWheel = new Winwheel({
+      canvasId    : 'canvas',
+      numSegments : segmentsData.length,
+      segments    : segmentsData,
+      outerRadius : 230,
+      animation   : {
+        type           : 'spinToStop',
+        duration       : 5,
+        spins          : 3,
+        callbackFinished : showWinner,
+        callbackSound  : playSound,
+        soundTrigger   : 'pin'
+      },
+      pins: {
+        number     : segmentsData.length,
+        fillStyle  : 'silver',
+        outerRadius: 4
+      }
+    });
+
+    // 5) Girar la ruleta
+    function startSpin() {
+      theWheel.stopAnimation(false);
+      theWheel.rotationAngle = 0;
+      theWheel.draw();
+      theWheel.startAnimation();
+    }
+
+    // 6) Mostrar ganador al detenerse
+    function showWinner(indicatedSegment) {
+      // "indicatedSegment.text" = "XXX..."
+      let idx = segmentsData.findIndex(seg => seg.text === indicatedSegment.text);
+      let realPhone = phonesRaw[idx];
+      alert("¡Ganador!: " + realPhone);
+    }
+
+    // 7) Resetear la ruleta
+    function resetWheel() {
+      theWheel.stopAnimation(false);
+      theWheel.rotationAngle = 0;
+      theWheel.draw();
+    }
+
+    // 8) Listeners de los botones
+    document.getElementById('spinButton').addEventListener('click', startSpin);
+    document.getElementById('resetButton').addEventListener('click', resetWheel);
+  </script>
+</body>
+</html>
